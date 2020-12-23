@@ -1,0 +1,69 @@
+/* Selects military war leaders from their respective countries */
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewMilitaryWarLeaders AS
+SELECT 
+    CONCAT(war_leader_first_name, " ", war_leader_last_name) AS 'Leader Name', 
+    war_leader_military_rank AS 'Military Rank',
+    country_name AS 'Country',
+    war_name AS 'War Fought'
+FROM basic_war_information
+JOIN war_leaders USING(war_id)
+JOIN countries USING(country_id)
+WHERE war_leader_military_rank IN
+	(SELECT war_leader_military_rank
+    FROM war_leaders
+    WHERE war_leader_military_rank IS NOT NULL)
+GROUP BY war_name
+ORDER BY war_id;
+
+/* Selects military branches that are currently active */
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewActiveMilitaryBranches AS
+SELECT DISTINCT(country_name) AS 'Country',
+ military_branch_status AS 'Military Branch Status',
+ military_branch_name AS 'Military Branch Name'
+FROM countries JOIN military_branches
+USING (country_id)
+WHERE military_branch_status = "Active"
+ORDER BY country_name;
+
+/* Selects average number of wounded and dead from wars after the Spanish-American war */
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewAverageNumbers AS
+SELECT 
+ROUND(AVG(wounded_number)) AS 'Average Number of Wounded',
+ROUND(AVG(fatality_number)) AS 'Average Number of Fatalities'
+FROM basic_war_information 
+WHERE war_id > 5;
+
+/* Selects the countries, capitals, and current country status of US enemies during WW2  */
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewCountryStandingsWWII AS
+SELECT country_name, country_capital, war_name, country_standing
+FROM basic_war_information JOIN
+us_war_enemies USING(war_id)
+JOIN countries USING(country_id)
+WHERE war_id = 8;
+
+/* Selects the leaders of Dissolved Countries */ 
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewLeadersDissolved AS
+SELECT country_name AS 'Country', 
+CONCAT(war_leader_first_name,' ', war_leader_last_name) AS 'War Leader'
+FROM countries JOIN war_leaders USING(country_id)
+WHERE country_standing = 'Dissolved';
+
+/* Selects wars, their result, and the # of deaths with wars over 50000 */
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewDeadly_wars AS
+SELECT war_name, war_result, fatality_number
+FROM basic_war_information
+WHERE fatality_number > 50000;
+
+/* Calculates Days at war for each war in the database in descending order */ 
+USE us_foreign_wars;
+CREATE OR REPLACE VIEW viewDaysAtWar AS
+SELECT war_name AS WarName,
+DATEDIFF(war_end_date, war_start_date) AS DaysAtWar
+FROM basic_war_information
+GROUP BY DaysAtWar DESC;
